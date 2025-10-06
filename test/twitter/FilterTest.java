@@ -37,6 +37,43 @@ public class FilterTest {
         assertEquals("expected singleton list", 1, writtenBy.size());
         assertTrue("expected list to contain tweet", writtenBy.contains(tweet1));
     }
+
+    @Test
+    public void testWrittenByMultipleTweetsMultipleResults(){
+        final Instant d3 = Instant.parse("2016-02-17T12:00:00Z");
+
+        final Tweet tweet3 = new Tweet(3, "alyssa", "BTW i think its not", d3);
+
+        List<Tweet> writtenBy = Filter.writtenBy(Arrays.asList(tweet1, tweet2, tweet3), "alyssa");
+
+        assertEquals("expected non-singleton list", 2, writtenBy.size());
+        assertTrue("expected list to contain multiple tweets", writtenBy.contains(tweet1));
+    }
+
+    @Test
+    public void testWrittenByEmptyList() {
+        List<Tweet> tweets = List.of();
+        List<Tweet> result = Filter.writtenBy(tweets, "alyssa");
+        assertTrue("expected empty result for empty tweet list", result.isEmpty());
+    }
+
+    @Test
+    public void testWrittenByNoMatch() {
+        List<Tweet> result = Filter.writtenBy(List.of(tweet1, tweet2), "maaz");
+        assertTrue("expected empty list when no author matches", result.isEmpty());
+    }
+
+    @Test
+    public void testWrittenByPreservesOrder() {
+        final Instant d3 = Instant.parse("2016-02-17T12:00:00Z");
+
+        final Tweet tweet3 = new Tweet(3, "alyssa", "BTW i think its not", d3);
+
+        List<Tweet> result = Filter.writtenBy(List.of(tweet3, tweet2, tweet1), "alyssa");
+
+        assertEquals("Expected preserved order of tweets by alyssa", List.of(tweet3, tweet1), result);
+    }
+
     
     @Test
     public void testInTimespanMultipleTweetsMultipleResults() {
@@ -49,14 +86,102 @@ public class FilterTest {
         assertTrue("expected list to contain tweets", inTimespan.containsAll(Arrays.asList(tweet1, tweet2)));
         assertEquals("expected same order", 0, inTimespan.indexOf(tweet1));
     }
-    
+
+    @Test
+    public void testInTimespanMultipleTweetsSingleResults(){
+        Instant testStart = Instant.parse("2016-02-17T09:30:00Z");
+        Instant testEnd = Instant.parse("2016-02-17T10:00:00Z");
+
+        List<Tweet> inTimespan = Filter.inTimespan(Arrays.asList(tweet1, tweet2), new Timespan(testStart, testEnd));
+
+        assertEquals("expected a single element list", 1, inTimespan.size());
+        assertTrue("expected list to contain tweets", inTimespan.containsAll(Arrays.asList(tweet1)));
+    }
+
+    @Test
+    public void testInTimespanEmptyList() {
+        Timespan span = new Timespan(Instant.parse("2016-02-17T09:00:00Z"),
+                Instant.parse("2016-02-17T10:00:00Z"));
+
+        List<Tweet> result = Filter.inTimespan(List.of(), span);
+
+        assertTrue("Expected empty result for empty tweet list", result.isEmpty());
+    }
+
+    @Test
+    public void testInTimespanBoundaryInclusive() {
+        Instant start = Instant.parse("2016-02-17T09:00:00Z");
+        Instant end = Instant.parse("2016-02-17T12:00:00Z");
+
+        Tweet tweet3 = new Tweet(3, "maaz", "test", start);
+        Tweet tweet4 = new Tweet(4, "ahmad", "test", end);
+
+        Timespan span = new Timespan(start, end);
+        List<Tweet> result = Filter.inTimespan(List.of(tweet3, tweet4), span);
+
+        assertEquals("Expected both boundary tweets included", 2, result.size());
+        assertTrue("Expected both tweets included", result.containsAll(List.of(tweet3, tweet4)));
+    }
+
     @Test
     public void testContaining() {
-        List<Tweet> containing = Filter.containing(Arrays.asList(tweet1, tweet2), Arrays.asList("talk"));
+        List<Tweet> containing = Filter.containing(Arrays.asList(tweet1, tweet2), List.of("talk"));
         
         assertFalse("expected non-empty list", containing.isEmpty());
         assertTrue("expected list to contain tweets", containing.containsAll(Arrays.asList(tweet1, tweet2)));
         assertEquals("expected same order", 0, containing.indexOf(tweet1));
+    }
+
+    @Test
+    public void testContainingSingleMatch() {
+        List<Tweet> result = Filter.containing(
+                Arrays.asList(tweet1, tweet2),
+                List.of("much")
+        );
+
+        assertEquals("expected 1 tweet containing 'obama'", 1, result.size());
+        assertTrue("expected tweet1 to be in result", result.contains(tweet1));
+    }
+
+    @Test
+    public void testContainingMultipleWordsSingleMatch() {
+        List<Tweet> result = Filter.containing(
+                Arrays.asList(tweet1, tweet2),
+                Arrays.asList("Much", "laughing")
+        );
+
+        assertEquals("expected 1 tweet containing 'Much' or 'laughing'", 1, result.size());
+        assertTrue("expected tweet1 to be in result", result.contains(tweet1));
+    }
+
+    @Test
+    public void testContainingNoMatches() {
+        List<Tweet> result = Filter.containing(
+                Arrays.asList(tweet1, tweet2),
+                Arrays.asList("banana", "unicorn")
+        );
+
+        assertTrue("expected no tweets matching given words", result.isEmpty());
+    }
+
+    @Test
+    public void testContainingEmptyWordsList() {
+        List<Tweet> result = Filter.containing(
+                Arrays.asList(tweet1, tweet2),
+                List.of()
+        );
+
+        assertTrue("expected no tweets when words list is empty", result.isEmpty());
+    }
+
+    @Test
+    public void testContainingEmptyTweetsList() {
+        List<Tweet> result = Filter.containing(
+                List.of(),
+                List.of("talk")
+        );
+
+        assertTrue("expected no tweets when tweets list is empty", result.isEmpty());
     }
 
     /*

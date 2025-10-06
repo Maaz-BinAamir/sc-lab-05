@@ -3,7 +3,10 @@
  */
 package twitter;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.*;
 
 /**
  * Filter consists of methods that filter a list of tweets for those matching a
@@ -27,7 +30,15 @@ public class Filter {
      *         in the same order as in the input list.
      */
     public static List<Tweet> writtenBy(List<Tweet> tweets, String username) {
-        throw new RuntimeException("not implemented");
+        List<Tweet> writtenByTweets = new ArrayList<>();
+
+        for (Tweet tweet: tweets){
+            if ((tweet.getAuthor().strip()).equalsIgnoreCase(username.strip())){
+                writtenByTweets.add(tweet);
+            }
+        }
+
+        return writtenByTweets;
     }
 
     /**
@@ -41,7 +52,18 @@ public class Filter {
      *         in the same order as in the input list.
      */
     public static List<Tweet> inTimespan(List<Tweet> tweets, Timespan timespan) {
-        throw new RuntimeException("not implemented");
+        List<Tweet> inTimespanTweets = new ArrayList<Tweet>();
+
+        Instant start = timespan.getStart();
+        Instant end = timespan.getEnd();
+
+        for (Tweet tweet: tweets){
+            if (!tweet.getTimestamp().isBefore(start) && !tweet.getTimestamp().isAfter(end)) {
+                inTimespanTweets.add(tweet);
+            }
+        }
+
+        return inTimespanTweets;
     }
 
     /**
@@ -59,8 +81,27 @@ public class Filter {
      *         so "Obama" is the same as "obama".  The returned tweets are in the
      *         same order as in the input list.
      */
+
     public static List<Tweet> containing(List<Tweet> tweets, List<String> words) {
-        throw new RuntimeException("not implemented");
+        List<Tweet> result = new ArrayList<>();
+
+        for (Tweet tweet : tweets) {
+            String text = tweet.getText().toLowerCase();
+
+            for (String word : words) {
+                String lowerWord = word.toLowerCase();
+
+                // splitting the tweet into words and check exact match
+                String regex = "(?i)\\b" + Pattern.quote(lowerWord) + "\\b";
+
+                if (text.matches(".*" + regex + ".*")) {
+                    result.add(tweet);
+                    break;
+                }
+            }
+        }
+
+        return result;
     }
 
 }
