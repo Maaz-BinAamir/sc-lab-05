@@ -79,8 +79,25 @@ public class SocialNetwork {
     public static List<String> influencers(Map<String, Set<String>> followsGraph) {
         Map<String, Integer> followerCount = new HashMap<>();
 
+        for (String follower: followsGraph.keySet()){
+            for (String followed: followsGraph.get(follower)){
+                followerCount.put(followed, followerCount.getOrDefault(followed, 0) + 1);
+            }
+        }
 
-        return new ArrayList<String>();
+        // Sort users by descending follower count, then alphabetically for ties
+        List<String> influencers = new ArrayList<>(followerCount.keySet());
+        influencers.sort((a, b) -> {
+            int diff = followerCount.get(b) - followerCount.get(a);
+            if (diff != 0) {
+                return diff;
+            }
+            else {
+                return a.compareTo(b);
+            }
+        });
+
+        return influencers;
     }
 
 }

@@ -86,6 +86,54 @@ public class SocialNetworkTest {
         assertTrue("expected empty list", influencers.isEmpty());
     }
 
+    @Test
+    public void testInfluencersSingleUserNoFollowers(){
+        Map<String, Set<String>> followsGraph = Map.of("maaz", Collections.emptySet());
+        List<String> influencers = SocialNetwork.influencers(followsGraph);
+
+//        assertEquals("expected maaz only", List.of("maaz"), influencers);
+        assertEquals("expected no influencers", 0, influencers.size());
+    }
+
+    @Test
+    public void testInfluencersSingleInfluencer(){
+        Map<String, Set<String>> followsGraph = Map.of("ahmed", Set.of("maaz"));
+        List<String> influencers = SocialNetwork.influencers(followsGraph);
+
+        // maaz has 1 follower, ahmed has 0
+        assertEquals("there should be only 1 influencer", 1, influencers.size());
+        assertEquals("maaz should be first influencer", "maaz", influencers.getFirst());
+    }
+
+    @Test
+    public void testInfluencersMultipleInfluencers() {
+        Map<String, Set<String>> followsGraph = new HashMap<>();
+        followsGraph.put("maaz", Set.of("ahmed", "muneeb"));
+        followsGraph.put("ahmed", Set.of("muneeb", "maaz"));
+        followsGraph.put("muneeb", Set.of("ahmed"));
+
+        List<String> influencers = SocialNetwork.influencers(followsGraph);
+
+        // ahmed and muneeb both have 2 followers
+        assertTrue("ahmed should appear before lower-ranked users",
+                influencers.indexOf("ahmed") < influencers.indexOf("maaz"));
+        assertTrue("muneeb should appear before lower-ranked users",
+                influencers.indexOf("muneeb") < influencers.indexOf("maaz"));
+    }
+
+    @Test
+    public void testInfluencersTiedInfluence(){
+        Map<String, Set<String>> followsGraph = new HashMap<>();
+        followsGraph.put("maaz", Set.of("ahmed"));
+        followsGraph.put("muneeb", Set.of("faisal"));
+
+        List<String> influencers = SocialNetwork.influencers(followsGraph);
+
+        // ahmed and faisal both have 1 follower — should be sorted alphabetically
+        assertEquals("expected alphabetical order for tied influencers",
+                List.of("ahmed", "faisal"), influencers);
+    }
+
     /*
      * Warning: all the tests you write here must be runnable against any
      * SocialNetwork class that follows the spec. It will be run against several
@@ -99,5 +147,4 @@ public class SocialNetworkTest {
      * define them in a different class. If you only need them in this test
      * class, then keep them in this test class.
      */
-
 }
