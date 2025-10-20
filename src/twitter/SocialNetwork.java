@@ -3,9 +3,9 @@
  */
 package twitter;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * SocialNetwork provides methods that operate on a social network.
@@ -40,10 +40,33 @@ public class SocialNetwork {
      *         All the Twitter usernames in the returned social network must be
      *         either authors or @-mentions in the list of tweets.
      */
-    public static Map<String, Set<String>> guessFollowsGraph(List<Tweet> tweets) {
-        throw new RuntimeException("not implemented");
+    private static Set<String> extractMentions(String text){
+        Set<String> mentions = new HashSet<>();
+        String regex = "(?<=^|[^A-Za-z0-9_])@([A-Za-z0-9_]+)\\b";
+        Matcher matcher = Pattern.compile(regex).matcher(text);
+        while (matcher.find()) {
+            mentions.add(matcher.group(1).toLowerCase());
+        }
+        return mentions;
     }
 
+    public static Map<String, Set<String>> guessFollowsGraph(List<Tweet> tweets) {
+        Map<String, Set<String>> followsGraph = new HashMap<>();
+
+        for (Tweet tweet: tweets){
+            String author = tweet.getAuthor().toLowerCase();
+            Set<String> mentions = extractMentions(tweet.getText());
+
+            mentions.remove(author); // user can't follow themselves
+
+            if(!mentions.isEmpty()){
+                followsGraph.putIfAbsent(author, new HashSet<>());
+                followsGraph.get(author).addAll(mentions);
+            }
+        }
+
+        return followsGraph;
+    }
     /**
      * Find the people in a social network who have the greatest influence, in
      * the sense that they have the most followers.
@@ -54,7 +77,10 @@ public class SocialNetwork {
      *         descending order of follower count.
      */
     public static List<String> influencers(Map<String, Set<String>> followsGraph) {
-        throw new RuntimeException("not implemented");
+        Map<String, Integer> followerCount = new HashMap<>();
+
+
+        return new ArrayList<String>();
     }
 
 }

@@ -5,11 +5,8 @@ package twitter;
 
 import static org.junit.Assert.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.time.Instant;
+import java.util.*;
 
 import org.junit.Test;
 
@@ -20,19 +17,67 @@ public class SocialNetworkTest {
      * See the ic03-testing exercise for examples of what a testing strategy comment looks like.
      * Make sure you have partitions.
      */
-    
+
+    private static final Instant d1 = Instant.parse("2016-02-17T10:00:00Z");
+    private static final Instant d2 = Instant.parse("2016-02-17T11:00:00Z");
+
     @Test(expected=AssertionError.class)
     public void testAssertionsEnabled() {
         assert false; // make sure assertions are enabled with VM argument: -ea
     }
-    
+
+
+    // Test for guessFollowsGraph()
     @Test
     public void testGuessFollowsGraphEmpty() {
         Map<String, Set<String>> followsGraph = SocialNetwork.guessFollowsGraph(new ArrayList<>());
         
         assertTrue("expected empty graph", followsGraph.isEmpty());
     }
-    
+
+    @Test
+    public void testGuessFollowsGraphNoMentions(){
+        Tweet t1 = new Tweet(1, "ahmed", "uhh this semester :(", d1);
+
+        Map<String, Set<String>> followsGraph = SocialNetwork.guessFollowsGraph(List.of(t1));
+
+        assertTrue("no tweets with a mention should return empty graph", followsGraph.isEmpty());
+    }
+
+    @Test
+    public void testGuessFollowsGraphSingleMention(){
+        Tweet t1 = new Tweet(1, "maaz", "uhh this semester :(", d1);
+        Tweet t2 = new Tweet(2, "ahmed", "so true @maaz", d2);
+
+        Map<String, Set<String>> followsGraph = SocialNetwork.guessFollowsGraph(List.of(t1, t2));
+
+        assertTrue("expected alice as key", followsGraph.containsKey("ahmed"));
+        assertTrue("expected alice follows bob", followsGraph.get("ahmed").contains("maaz"));
+    }
+
+    @Test
+    public void testGuessFollowsGraphMultipleMention(){
+        Tweet t1 = new Tweet(1, "ahmed", "so true @maaz. btw great job @muneeb on the project.", d1);
+
+        Map<String, Set<String>> followsGraph = SocialNetwork.guessFollowsGraph(List.of(t1));
+
+
+        Set<String> expected = new HashSet<>(Arrays.asList("maaz", "muneeb"));
+        assertEquals("expected both maaz and muneeb followed by ahmed", expected, followsGraph.get("ahmed"));
+    }
+
+    @Test
+    public void testGuessFollowsGraphMultipleTweetsSameUser() {
+        Tweet t1 = new Tweet(1, "ahmed", "hi @maaz", d1);
+        Tweet t2 = new Tweet(2, "ahmed", "bye @muneeb", d2);
+
+        Map<String, Set<String>> followsGraph = SocialNetwork.guessFollowsGraph(List.of(t1, t2));
+        Set<String> expected = new HashSet<>(Arrays.asList("maaz", "muneeb"));
+
+        assertEquals("expected both maaz and muneeb followed by ahmed", expected, followsGraph.get("ahmed"));
+    }
+
+    // Test for influencers()
     @Test
     public void testInfluencersEmpty() {
         Map<String, Set<String>> followsGraph = new HashMap<>();
